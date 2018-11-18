@@ -20,7 +20,7 @@ public class ChatClient {
         return client.newCall(request).execute();
     }
 
-    //GET запрос для того, чтобы увидеть основной чат со списокм сообщений "http://localhost:8080/chat/chat"
+    //GET запрос для того, чтобы увидеть основной чат со списком сообщений "http://localhost:8080/chat/chat"
     public static Response viewChat() throws IOException {
         Request request = new Request.Builder()
                 .get()
