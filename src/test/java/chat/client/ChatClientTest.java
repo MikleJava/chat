@@ -1,5 +1,6 @@
 package chat.client;
 
+import chat.server.ChatController;
 import okhttp3.Response;
 import org.junit.Test;
 
@@ -16,8 +17,17 @@ public class ChatClientTest {
         Response response = ChatClient.login(myName);
         System.out.println("[" + response + "]");
         String body = response.body().string();
-        System.out.println();
+        System.out.println(body);
         assertTrue(response.code() == 200 || body.equals("Already logged in"));
+    }
+
+    @Test
+    public void logout() throws IOException {
+        Response response = ChatClient.logout(myName);
+        System.out.println("[" + response + "]");
+        String body = response.body().string();
+        System.out.println(body);
+        assertTrue(response.code() == 200 || body.equals("User " + myName + " does not exist"));
     }
 
     @Test

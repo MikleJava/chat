@@ -20,6 +20,16 @@ public class ChatClient {
         return client.newCall(request).execute();
     }
 
+    //POST запрос для того, чтобы отлогиниться пользователю "http://localhost:8080/chat/logout"
+    public static Response logout(String name) throws IOException {
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        Request request = new Request.Builder()
+                .post(RequestBody.create(mediaType,""))
+                .url(PROTOCOL + HOST + PORT + "/chat/logout?name=" + name)
+                .build();
+        return client.newCall(request).execute();
+    }
+
     //GET запрос для того, чтобы увидеть основной чат со списком сообщений "http://localhost:8080/chat/chat"
     public static Response viewChat() throws IOException {
         Request request = new Request.Builder()

@@ -1,24 +1,27 @@
 package chat.server;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 @Controller
+//@Scope("prototype")
 @RequestMapping("chat")
 public class ChatController {
     private Queue<String> messages = new ConcurrentLinkedQueue<>();
-    private Map<String, String> usersOnline = new HashMap<>();
+    public Map<String, String> usersOnline = new HashMap<>();
+
+    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 
     @RequestMapping (
             path = "login",
@@ -36,7 +39,7 @@ public class ChatController {
             return ResponseEntity.badRequest().body("Already logged in");
         }
         usersOnline.put(name, name);
-        messages.add("[" + name + "] logged in");
+        messages.add(sdf.format(new Date())+ " [" + name + "] logged in");
         return ResponseEntity.ok().build();
     }
 
@@ -52,8 +55,13 @@ public class ChatController {
         if (name.length() > 25) {
             return ResponseEntity.badRequest().body("Too long name");
         }
-        usersOnline.remove(name,name);
-        messages.add("[" + name + "] logged out");
+        if(usersOnline.containsKey(name)) {
+            usersOnline.remove(name, name);
+            messages.add(sdf.format(new Date()) + " [" + name + "] logged out");
+        }
+        else {
+            return ResponseEntity.badRequest().body("User " + name + " does not exist");
+        }
         return ResponseEntity.ok().build();
     }
 
@@ -72,7 +80,8 @@ public class ChatController {
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> say(@RequestParam("name") String name, @RequestParam("msg") String msg) {
-        messages.add("[" + name + "] : " + msg);
+        if(!usersOnline.containsKey(name)) return ResponseEntity.badRequest().body("User " + name + " does not exist");
+        messages.add(sdf.format(new Date()) + " [" + name + "] : " + msg);
         return ResponseEntity.ok().build();
     }
 
@@ -80,6 +89,7 @@ public class ChatController {
             path = "chat",
             method = RequestMethod.GET,
             produces = MediaType.TEXT_PLAIN_VALUE)
+    @ResponseBody
     public ResponseEntity chat() {
         String responseBody = String.join("\n", messages.stream().sorted().collect(Collectors.toList()));
         return ResponseEntity.ok(responseBody);
