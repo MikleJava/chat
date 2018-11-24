@@ -15,7 +15,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 @Controller
-//@Scope("prototype")
 @RequestMapping("chat")
 public class ChatController {
     private Queue<String> messages = new ConcurrentLinkedQueue<>();
@@ -81,6 +80,7 @@ public class ChatController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> say(@RequestParam("name") String name, @RequestParam("msg") String msg) {
         if(!usersOnline.containsKey(name)) return ResponseEntity.badRequest().body("User " + name + " does not exist");
+        if(msg == "/clear") {messages.removeAll(messages);}
         messages.add(sdf.format(new Date()) + " [" + name + "] : " + msg);
         return ResponseEntity.ok().build();
     }
