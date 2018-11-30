@@ -9,12 +9,12 @@
             font-family: "Courier New", Courier, monospace;
             position: absolute;
             padding: 10px;
-            width: 1080px;
-            left: 231px;
+            width: 1076px;
+            left: 235px;
             top: 55px;
             overflow: auto;
-            margin: 0 0 1em;
-
+            margin: 0 0 0 0;
+            white-space: pre-wrap;
         }
 
         .form {
@@ -52,7 +52,7 @@
             background: #F4A460;
             font-family: "Times New Roman", Times New Roman, monospace;
             overflow: auto;
-            margin: 0 0 1em;
+            margin: 0 0 0 0;
         }
 
         #footer {
@@ -63,29 +63,42 @@
             height: 23px; /* Height of the footer */
             background: #87CEFA;
         }
-        #nameform2 {
+        #nameform3 {
             position: absolute;
-            top: 17px;
+            top: 16px;
             right: 19px;
         }
+        #nameform2 {
+            position : absolute;
+            top: 16px;
+            left : 240px;
+        }
+
         #name1 {
             width: 214px;
         }
+        .usersform {
+            background: #87C89A;
+        }
+
     </style>
 </head>
 <html>
 <body>
 <div id="header">
-    <form method="POST" id="nameform1" action="javascript:void(null);" onsubmit="login()">
+    <form method="POST" id="nameform1" action="javascript:void(null);">
         <input id="name1" name="name" value="" style="font-size:medium" type="text">
+    </form>
+    <form method="POST" id="nameform2" action="javascript:void(null);" onsubmit="login()">
+        <input id="name2" name="pswd" value="" style="font-size:medium" type="text">
         <input value="Login" style="font-size:large" type="submit">
     </form>
-    <form method="POST" id="nameform2" action="javascript:void(null);" onsubmit="logout()">
+    <form method="POST" id="nameform3" action="javascript:void(null);" onsubmit="logout()">
         <input value="Logout" style="font-size:large" type="submit">
     </form>
 </div>
 <div id = "left">
-    <div id="usersonline" class="users form"></div>
+    <div id="usersonline" class="usersform"></div>
 </div>
 <div id="body">
     <div id="history" class="chat form"></div>
@@ -103,7 +116,6 @@
 <script>
     var host = "localhost";
     var port = 8080;
-
 
     function loadHistory() {
         var settings = {
@@ -129,7 +141,6 @@
 
         $.ajax(settings).done(function (response) {
             $("#usersonline").html(response.replace(/\n/g, "<br />"))
-            $("#usersonline").scrollTop($("#usersonline")[0].scrollHeight);
         }).fail(function (jqXHR, textStatus) {
             console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
         });
@@ -157,12 +168,13 @@
 
     function login() {
         var name = $('#nameform1').serialize();
+        var pswd = $('#nameform2').serialize();
 
         var settings = {
             "method": "POST",
             "crossDomain": true,
             "url": "http://" + host + ":" + port + "/chat/login",
-            "data": name
+            "data": name + "&" + pswd
         };
 
         $.ajax(settings).done(function (response) {
@@ -176,16 +188,18 @@
 
     function logout() {
         var name = $('#nameform1').serialize();
+        var pswd = $('#nameform2').serialize();
 
         var settings = {
             "method": "POST",
             "crossDomain": true,
             "url": "http://" + host + ":" + port + "/chat/logout",
-            "data": name
+            "data": name + "&" + pswd
         };
 
         $.ajax(settings).done(function (response) {
             loadHistory();
+            loadUsers();
         }).fail(function (jqXHR, textStatus) {
             alert(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
             console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);

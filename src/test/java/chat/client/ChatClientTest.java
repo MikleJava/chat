@@ -51,6 +51,17 @@ public class ChatClientTest {
         Response response = ChatClient.say(myName, myMessage);
         System.out.println("[" + response + "]");
         System.out.println(response.body().string());
+        ChatController chatController = new ChatController();
+        System.out.println(chatController.messages.size());
         assertEquals(200, response.code());
+    }
+
+    @Test
+    public void clear() throws IOException {
+        Response response = ChatClient.say(myName, "/clear");
+        ChatController chatController = new ChatController();
+        System.out.println("[" + response + "]");
+        System.out.println(response.body().string());
+        assertEquals(chatController.messages.size(), 0);
     }
 }
