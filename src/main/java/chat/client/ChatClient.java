@@ -11,11 +11,11 @@ public class ChatClient {
     private static final String PORT = ":8080";
 
     //POST запрос для того, чтобы залогиниться пользователю "http://localhost:8080/chat/login"
-    public static Response login(String name) throws IOException {
+    public static Response login(String name, String pswd) throws IOException {
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         Request request = new Request.Builder()
                 .post(RequestBody.create(mediaType,""))
-                .url(PROTOCOL + HOST + PORT + "/chat/login?name=" + name)
+                .url(PROTOCOL + HOST + PORT + "/chat/login?name=" + name + "&pswd=" + pswd)
                 .build();
         return client.newCall(request).execute();
     }

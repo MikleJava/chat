@@ -149,12 +149,13 @@
     function say() {
         var msg = $('#msgform').serialize();
         var name = $('#nameform1').serialize();
+        var pswd = $('#nameform2').serialize();
 
         var settings = {
             "method": "POST",
             "crossDomain": true,
             "url": "http://" + host + ":" + port + "/chat/say",
-            "data": name + "&" + msg
+            "data": name + "&" + pswd + "&" + msg
         };
 
         $.ajax(settings).done(function (response) {
