@@ -116,11 +116,12 @@
 <script>
     var host = "localhost";
     var port = 8080;
+    var domain = "/chat";
 
     function loadHistory() {
         var settings = {
             "crossDomain": true,
-            "url": "http://" + host + ":" + port + "/chat/chat",
+            "url": "http://" + host + ":" + port + domain + "/chat",
             "method": "GET",
         }
 
@@ -135,7 +136,7 @@
     function loadUsers() {
         var settings = {
             "crossDomain": true,
-            "url": "http://" + host + ":" + port + "/chat/online",
+            "url": "http://" + host + ":" + port + domain + "/online",
             "method": "GET",
         }
 
@@ -154,7 +155,7 @@
         var settings = {
             "method": "POST",
             "crossDomain": true,
-            "url": "http://" + host + ":" + port + "/chat/say",
+            "url": "http://" + host + ":" + port + domain + "/say",
             "data": name + "&" + pswd + "&" + msg
         };
 
@@ -174,7 +175,7 @@
         var settings = {
             "method": "POST",
             "crossDomain": true,
-            "url": "http://" + host + ":" + port + "/chat/login",
+            "url": "http://" + host + ":" + port + domain + "/login",
             "data": name + "&" + pswd
         };
 
@@ -194,7 +195,7 @@
         var settings = {
             "method": "POST",
             "crossDomain": true,
-            "url": "http://" + host + ":" + port + "/chat/logout",
+            "url": "http://" + host + ":" + port + domain + "/logout",
             "data": name + "&" + pswd
         };
 

@@ -11,14 +11,21 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("chat")
-public class ChatController {
+public class ChatController extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
     @Autowired
@@ -26,12 +33,34 @@ public class ChatController {
 
     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 
+    @RequestMapping (path = "setCookie",
+            method = RequestMethod.GET,
+            produces = MediaType.TEXT_PLAIN_VALUE)
+    public String setCookie (HttpServletRequest request, HttpServletResponse response) {
+        Cookie cookie = new Cookie("cookieName", request.getRequestURL().toString());
+        cookie.setMaxAge(100);
+        response.addCookie(cookie);
+        System.out.println("Object: " + cookie + "; Name: " + cookie.getName() + "; Value: " + cookie.getValue());
+        return "/cookie/cookieView";
+    }
+
+    @RequestMapping (path = "getCookie",
+            method = RequestMethod.GET,
+            produces = MediaType.TEXT_PLAIN_VALUE)
+    public ModelAndView getCookie (@CookieValue(value = "cookieName", required = false)Cookie cookieName, HttpServletRequest request) {
+        String cookieValue =  "cookie with name 'cookieName' is empty";
+        if (cookieName != null) {
+            cookieValue  = "Object: " + cookieName + ";<br/> Name: " + cookieName.getName() + ";<br/> Value: " + cookieName.getValue();
+        }
+        return new ModelAndView("/cookie/cookieView", "cookieValueObj", cookieValue);
+    }
+
     @RequestMapping (
             path = "login",
             method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> login(@RequestParam("name") String name, @RequestParam("pswd") String pswd) {
+    public ResponseEntity<String> login(@RequestParam("name") String name, @RequestParam("pswd") String pswd, HttpServletResponse response) {
         if (name.length() < 1) {
             return ResponseEntity.badRequest().body("Too short name");
         }
@@ -49,6 +78,10 @@ public class ChatController {
             return ResponseEntity.badRequest().body("Already logged in");
         }
         chatService.login(name, pswd);
+        Cookie cookie = new Cookie("cookieName", "localhost:8080");
+        cookie.setMaxAge(100);
+        response.addCookie(cookie);
+        System.out.println("Object: " + cookie + "; Name: " + cookie.getName() + "; Value: " + cookie.getValue());
         log.info("User '" + name + "' logged in chat");
         return ResponseEntity.ok().build();
     }
