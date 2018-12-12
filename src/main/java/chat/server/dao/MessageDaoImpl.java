@@ -20,6 +20,7 @@ public class MessageDaoImpl implements MessageDao {
 
     @Override
     public List<Message> getAll() {
-        return em.createQuery("Select t from " + Message.class.getSimpleName() + " t").getResultList();
+        List<Message> m = em.createQuery("Select t from " + Message.class.getSimpleName() + " t").getResultList();
+        return m;
     }
 }

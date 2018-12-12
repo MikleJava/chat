@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -56,7 +55,7 @@ public class ChatService {
     }
 
     @Transactional
-    public void say(@NotNull String value, @NotNull Date time, @NotNull User user_id) {
+    public void say(@NotNull String value, @NotNull String time, @NotNull User user_id) {
         Message message = new Message();
         messageDao.save(message.setFullMsg(value, time, user_id));
     }

@@ -86,13 +86,6 @@
 <html>
 <body>
 <div id="header">
-    <form method="POST" id="nameform1" action="javascript:void(null);">
-        <input id="name1" name="name" value="" style="font-size:medium" type="text">
-    </form>
-    <form method="POST" id="nameform2" action="javascript:void(null);" onsubmit="login()">
-        <input id="name2" name="pswd" value="" style="font-size:medium" type="text">
-        <input value="Login" style="font-size:large" type="submit">
-    </form>
     <form method="POST" id="nameform3" action="javascript:void(null);" onsubmit="logout()">
         <input value="Logout" style="font-size:large" type="submit">
     </form>
@@ -148,15 +141,14 @@
     }
 
     function say() {
+
         var msg = $('#msgform').serialize();
-        var name = $('#nameform1').serialize();
-        var pswd = $('#nameform2').serialize();
 
         var settings = {
             "method": "POST",
             "crossDomain": true,
             "url": "http://" + host + ":" + port + domain + "/say",
-            "data": name + "&" + pswd + "&" + msg
+            "data": msg
         };
 
         $.ajax(settings).done(function (response) {
@@ -168,35 +160,11 @@
         });
     }
 
-    function login() {
-        var name = $('#nameform1').serialize();
-        var pswd = $('#nameform2').serialize();
-
-        var settings = {
-            "method": "POST",
-            "crossDomain": true,
-            "url": "http://" + host + ":" + port + domain + "/login",
-            "data": name + "&" + pswd
-        };
-
-        $.ajax(settings).done(function (response) {
-            loadHistory();
-            loadUsers();
-        }).fail(function (jqXHR, textStatus) {
-            alert(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
-            console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
-        });
-    }
-
     function logout() {
-        var name = $('#nameform1').serialize();
-        var pswd = $('#nameform2').serialize();
-
         var settings = {
             "method": "POST",
             "crossDomain": true,
-            "url": "http://" + host + ":" + port + domain + "/logout",
-            "data": name + "&" + pswd
+            "url": "http://" + host + ":" + port + domain + "/logout"
         };
 
         $.ajax(settings).done(function (response) {
@@ -209,7 +177,7 @@
     }
 
     loadHistory();
-    setInterval(loadHistory, 1000);
+    setInterval(loadHistory, 10000);
     loadUsers();
-    setInterval(loadUsers, 1000);
+    setInterval(loadUsers, 10000);
 </script>

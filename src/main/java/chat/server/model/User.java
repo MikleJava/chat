@@ -2,7 +2,6 @@ package chat.server.model;
 
 import javax.persistence.*;
 import java.util.Collection;
-import java.util.Queue;
 
 @Entity
 @Table(name = "user", schema = "chat")

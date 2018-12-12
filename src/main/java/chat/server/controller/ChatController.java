@@ -13,12 +13,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,6 +25,9 @@ import java.util.stream.Collectors;
 @RequestMapping("chat")
 public class ChatController extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
+
+    private String name;
+    private String pswd;
 
     @Autowired
     private ChatService chatService;
@@ -61,6 +62,8 @@ public class ChatController extends HttpServlet {
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> login(@RequestParam("name") String name, @RequestParam("pswd") String pswd, HttpServletResponse response) {
+        this.name = name;
+        this.pswd = pswd;
         if (name.length() < 1) {
             return ResponseEntity.badRequest().body("Too short name");
         }
@@ -78,7 +81,7 @@ public class ChatController extends HttpServlet {
             return ResponseEntity.badRequest().body("Already logged in");
         }
         chatService.login(name, pswd);
-        Cookie cookie = new Cookie("cookieName", "localhost:8080");
+        Cookie cookie = new Cookie(name, pswd);
         cookie.setMaxAge(100);
         response.addCookie(cookie);
         System.out.println("Object: " + cookie + "; Name: " + cookie.getName() + "; Value: " + cookie.getValue());
@@ -101,6 +104,20 @@ public class ChatController extends HttpServlet {
         return ResponseEntity.ok().build();
     }
 
+    @RequestMapping (
+            path = "say",
+            method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<String> say(@RequestParam("msg") String msg) {
+        User loggedInUser = chatService.getLoggedIn(name, pswd);
+        if(loggedInUser == null) {
+            return ResponseEntity.badRequest().body("User does not exist");
+        }
+        chatService.say(msg, sdf.format(new Date()), loggedInUser);
+        return ResponseEntity.ok().build();
+    }
+
     @RequestMapping(
             path = "online",
             method = RequestMethod.GET,
@@ -113,29 +130,14 @@ public class ChatController extends HttpServlet {
         return ResponseEntity.ok(responseBody);
     }
 
-    @RequestMapping (
-            path = "say",
-            method = RequestMethod.POST,
-            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> say(@RequestParam("name") String name, @RequestParam("pswd") String pswd, @RequestParam("msg") String msg) {
-        User loggedInUser = chatService.getLoggedIn(name, pswd);
-        if(loggedInUser == null) {
-            return ResponseEntity.badRequest().body("User does not exist");
-        }
-        chatService.say(msg, new Date(), loggedInUser);
-        return ResponseEntity.ok().build();
-    }
-
     @RequestMapping(
             path = "chat",
             method = RequestMethod.GET,
             produces = MediaType.TEXT_PLAIN_VALUE)
-    @ResponseBody
     public ResponseEntity chat() {
         List<Message> messages = chatService.getMessages();
         String responseBody = messages.stream()
-                .map(Message::getValue)
+                .map(Message::getFullMsg)
                 .collect(Collectors.joining("\n"));
         return ResponseEntity.ok(responseBody);
     }

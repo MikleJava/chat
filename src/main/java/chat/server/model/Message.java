@@ -1,7 +1,6 @@
 package chat.server.model;
 
 import javax.persistence.*;
-import java.util.Date;
 
 @Entity
 @Table(name = "message", schema = "chat")
@@ -15,23 +14,27 @@ public class Message {
     private User user_id;
 
     @Column(name = "time", nullable = false)
-    private Date time;
+    private String time;
 
     @Column(name = "value", nullable = false, length = 145)
     private String value;
 
-    public Message setFullMsg(String value, Date time, User user_id) {
+    public Message setFullMsg(String value, String time, User user_id) {
         this.value = value;
         this.time = time;
         this.user_id = user_id;
         return this;
     }
 
+    public String getFullMsg() {
+        return time + " " + user_id.getLogin() + " : " + value;
+    }
+
     public User getUserId() {
         return user_id;
     }
 
-    public Date getTime() {
+    public String getTime() {
         return time;
     }
 
