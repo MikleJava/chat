@@ -15,6 +15,23 @@ public class UserDaoImpl implements UserDao {
     private EntityManager em;
 
     @Override
+    public User getByCookieValue(String value) {
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+        CriteriaQuery<User> criteria = builder.createQuery(User.class);
+        Root<User> from = criteria.from(User.class);
+        criteria.select(from);
+        criteria.where(builder.equal(from.get("value"), value));
+        TypedQuery<User> typed = em.createQuery(criteria);
+        User user;
+        try {
+            user = typed.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+        return user;
+    }
+
+    @Override
     public User getByLoginAndPassword(String login, String password) {
         CriteriaBuilder builder = em.getCriteriaBuilder();
         CriteriaQuery<User> criteria = builder.createQuery(User.class);

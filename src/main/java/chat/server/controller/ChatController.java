@@ -11,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
@@ -26,81 +25,59 @@ import java.util.stream.Collectors;
 public class ChatController extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
-    private String name;
-    private String pswd;
-
     @Autowired
     private ChatService chatService;
 
+    private static final String SESSION_ID = "SESSION_ID";
     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-
-    @RequestMapping (path = "setCookie",
-            method = RequestMethod.GET,
-            produces = MediaType.TEXT_PLAIN_VALUE)
-    public String setCookie (HttpServletRequest request, HttpServletResponse response) {
-        Cookie cookie = new Cookie("cookieName", request.getRequestURL().toString());
-        cookie.setMaxAge(100);
-        response.addCookie(cookie);
-        System.out.println("Object: " + cookie + "; Name: " + cookie.getName() + "; Value: " + cookie.getValue());
-        return "/cookie/cookieView";
-    }
-
-    @RequestMapping (path = "getCookie",
-            method = RequestMethod.GET,
-            produces = MediaType.TEXT_PLAIN_VALUE)
-    public ModelAndView getCookie (@CookieValue(value = "cookieName", required = false)Cookie cookieName, HttpServletRequest request) {
-        String cookieValue =  "cookie with name 'cookieName' is empty";
-        if (cookieName != null) {
-            cookieValue  = "Object: " + cookieName + ";<br/> Name: " + cookieName.getName() + ";<br/> Value: " + cookieName.getValue();
-        }
-        return new ModelAndView("/cookie/cookieView", "cookieValueObj", cookieValue);
-    }
 
     @RequestMapping (
             path = "login",
             method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> login(@RequestParam("name") String name, @RequestParam("pswd") String pswd, HttpServletResponse response) {
-        this.name = name;
-        this.pswd = pswd;
-        if (name.length() < 1) {
-            return ResponseEntity.badRequest().body("Too short name");
-        }
-        if (name.length() > 25) {
-            return ResponseEntity.badRequest().body("Too long name");
-        }
-        if (pswd.length() < 1) {
-            return ResponseEntity.badRequest().body("Too short password");
-        }
-        if (pswd.length() > 25) {
-            return ResponseEntity.badRequest().body("Too long password");
-        }
+    public ResponseEntity<String> login(@RequestParam("name") String name, @RequestParam("pswd") String pswd,
+                                        HttpServletRequest request, HttpServletResponse response) {
+        if (name.length() < 1) {return ResponseEntity.badRequest().body("Too short name");}
+        if (name.length() > 25) {return ResponseEntity.badRequest().body("Too long name");}
+        if (pswd.length() < 1) {return ResponseEntity.badRequest().body("Too short password");}
+        if (pswd.length() > 25) {return ResponseEntity.badRequest().body("Too long password");}
         User alreadyLoggedIn = chatService.getLoggedIn(name, pswd);
         if(alreadyLoggedIn != null) {
             return ResponseEntity.badRequest().body("Already logged in");
         }
-        chatService.login(name, pswd);
-        Cookie cookie = new Cookie(name, pswd);
-        cookie.setMaxAge(100);
-        response.addCookie(cookie);
-        System.out.println("Object: " + cookie + "; Name: " + cookie.getName() + "; Value: " + cookie.getValue());
-        log.info("User '" + name + "' logged in chat");
+        Cookie[] cookies = request.getCookies();
+        if(cookies == null) {
+            Cookie cookie = chatService.setCookie(SESSION_ID, name, pswd, response);
+            chatService.login(name, pswd, cookie.getValue());
+        } else {
+            User loggedInUser;
+            for(Cookie cookie : cookies) {
+                loggedInUser = chatService.getLoggedIn(cookie.getValue());
+                chatService.logout(loggedInUser);
+                chatService.deleteCookie(request, response);
+            }
+            Cookie cookie = chatService.setCookie(SESSION_ID, name, pswd, response);
+            chatService.login(name, pswd, cookie.getValue());
+        }
         return ResponseEntity.ok().build();
     }
 
     @RequestMapping (
             path = "logout",
-            method = RequestMethod.POST,
-            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> logout(@RequestParam("name") String name, @RequestParam("pswd") String pswd) {
-        User loggedInUser = chatService.getLoggedIn(name, pswd);
-        if(loggedInUser == null) {
-            return ResponseEntity.badRequest().body("User does not exist");
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        User loggedInUser;
+        Cookie[] cookies = request.getCookies();
+        for(Cookie cookie : cookies) {
+            loggedInUser = chatService.getLoggedIn(cookie.getValue());
+            if(loggedInUser == null) {
+                return ResponseEntity.badRequest().body("You must be logged in");
+            }
+            chatService.logout(loggedInUser);
+            chatService.deleteCookie(request, response);
         }
-        chatService.logout(loggedInUser);
-        log.info("User '" + name + "' logged out chat");
         return ResponseEntity.ok().build();
     }
 
@@ -109,10 +86,14 @@ public class ChatController extends HttpServlet {
             method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> say(@RequestParam("msg") String msg) {
-        User loggedInUser = chatService.getLoggedIn(name, pswd);
-        if(loggedInUser == null) {
-            return ResponseEntity.badRequest().body("User does not exist");
+    public ResponseEntity<String> say(@RequestParam("msg") String msg, HttpServletRequest request) {
+        User loggedInUser = null;
+        Cookie[] cookies = request.getCookies();
+        for(Cookie cookie : cookies) {
+            loggedInUser = chatService.getLoggedIn(cookie.getValue());
+            if (loggedInUser == null) {
+                return ResponseEntity.badRequest().body("You must be logged in");
+            }
         }
         chatService.say(msg, sdf.format(new Date()), loggedInUser);
         return ResponseEntity.ok().build();

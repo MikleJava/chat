@@ -1,183 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <title>Auth</title>
     <style>
-        :root {
-            background: #87CEFA;
-        }
 
-        .chat {
-            background: #EEE8AA;
-            font-family: "Courier New", Courier, monospace;
-            position: absolute;
-            padding: 10px;
-            width: 1076px;
-            left: 235px;
-            top: 55px;
-            overflow: auto;
-            margin: 0 0 0 0;
-            white-space: pre-wrap;
-        }
-
-        .form {
-            position: absolute;
-            height: 85%;
-        }
-
-        .msginput {
-            width: 82%;
-        }
-
-        .sendbutton {
-            width: 15%;
-        }
-
-        #header {
-            background: #87CEFA;
-            padding: 10px;
-            padding-bottom: 0;
-        }
-
-        #body {
-            padding: 10px;
-            padding-top: 0;
-            padding-bottom: 30px; /* Height of the footer */
-        }
-
-        #left {
-            position: absolute;
-            padding: 10px;
-            left: 18px;
-            width: 200px;
-            top: 55px;
-            height: 85%;
-            background: #F4A460;
-            font-family: "Times New Roman", Times New Roman, monospace;
-            overflow: auto;
-            margin: 0 0 0 0;
-        }
-
-        #footer {
-            padding: 10px;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 23px; /* Height of the footer */
-            background: #87CEFA;
-        }
-        #nameform3 {
-            position: absolute;
-            top: 16px;
-            right: 19px;
-        }
-        #nameform2 {
-            position : absolute;
-            top: 16px;
-            left : 240px;
+        body {
+            background-image: url('images/clouds.jpg');
+            -moz-background-size: 110%;
+            -webkit-background-size: 110%;
+            -o-background-size: 110%;
+            background-size: 120%;
+            background-repeat: no-repeat;
         }
 
         #name1 {
-            width: 214px;
-        }
-        .usersform {
-            background: #87C89A;
+            position: absolute;
+            left: 45%;
+            top : 250px;
+            height : 30px;
+            width : 250px;
         }
 
+        #name2 {
+            position: fixed;
+            left: 45%;
+            top : 300px;
+            height : 30px;
+            width : 250px;
+        }
+
+        #name3 {
+            position: fixed;
+            left: 45%;
+            top : 350px;
+            height : 40px;
+            width : 250px;
+        }
     </style>
 </head>
-<html>
 <body>
-<div id="header">
-    <form method="POST" id="nameform3" action="javascript:void(null);" onsubmit="logout()">
-        <input value="Logout" style="font-size:large" type="submit">
-    </form>
-</div>
-<div id = "left">
-    <div id="usersonline" class="usersform"></div>
-</div>
-<div id="body">
-    <div id="history" class="chat form"></div>
-</div>
-<div id="footer">
-    <form method="POST" id="msgform" action="javascript:void(null);" onsubmit="say()">
-        <input id="msg" name="msg" class="msginput" value="" style="font-size:medium" type="text">
-        <input value="Send" class="sendbutton" style="font-size:large" type="submit">
-    </form>
-</div>
+    <div id="headerA">
+        <form method="POST" id="nameform1" action="javascript:void(null);">
+            <p><input id="name1" name="name" value="" style="font-size:large" type="text" placeholder="login"></p>
+        </form>
+        <form method="POST" id="nameform2" action="javascript:void(null);">
+            <p><input id="name2" name="pswd" value="" style="font-size:large" type="text" placeholder="password"></p>
+        </form>
+        <form method="POST" id="nameform3" action="javascript:void(null);" onsubmit="login()">
+            <input id="name3" value="Login" style="font-size:large" type="submit">
+        </form>
+    </div>
 </body>
 </html>
-
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script>
+    var host = "localhost";
+    var port = 8080;
+
+    if(document.cookie !== "") {
+        window.location = "http://" + host + ":" + port + "/main.html";
+    }
+</script>
 <script>
     var host = "localhost";
     var port = 8080;
     var domain = "/chat";
 
-    function loadHistory() {
-        var settings = {
-            "crossDomain": true,
-            "url": "http://" + host + ":" + port + domain + "/chat",
-            "method": "GET",
-        }
-
-        $.ajax(settings).done(function (response) {
-            $("#history").html(response.replace(/\n/g, "<br />"))
-            $("#history").scrollTop($("#history")[0].scrollHeight);
-        }).fail(function (jqXHR, textStatus) {
-            console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
-        });
-    }
-
-    function loadUsers() {
-        var settings = {
-            "crossDomain": true,
-            "url": "http://" + host + ":" + port + domain + "/online",
-            "method": "GET",
-        }
-
-        $.ajax(settings).done(function (response) {
-            $("#usersonline").html(response.replace(/\n/g, "<br />"))
-        }).fail(function (jqXHR, textStatus) {
-            console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
-        });
-    }
-
-    function say() {
-
-        var msg = $('#msgform').serialize();
+    function login() {
+        var name = $('#nameform1').serialize();
+        var pswd = $('#nameform2').serialize();
 
         var settings = {
             "method": "POST",
             "crossDomain": true,
-            "url": "http://" + host + ":" + port + domain + "/say",
-            "data": msg
+            "url": "http://" + host + ":" + port + domain + "/login",
+            "data": name + "&" + pswd
         };
 
         $.ajax(settings).done(function (response) {
-            $('#msgform').trigger("reset");
-            loadHistory();
+            window.location = "http://" + host + ":" + port + "/main.html";
         }).fail(function (jqXHR, textStatus) {
             alert(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
             console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
         });
     }
-
-    function logout() {
-        var settings = {
-            "method": "POST",
-            "crossDomain": true,
-            "url": "http://" + host + ":" + port + domain + "/logout"
-        };
-
-        $.ajax(settings).done(function (response) {
-            loadHistory();
-            loadUsers();
-        }).fail(function (jqXHR, textStatus) {
-            alert(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
-            console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
-        });
-    }
-
-    loadHistory();
-    setInterval(loadHistory, 10000);
-    loadUsers();
-    setInterval(loadUsers, 10000);
 </script>

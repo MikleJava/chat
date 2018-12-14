@@ -16,6 +16,9 @@ public class User {
     @Column(name = "password", nullable = false, length = 25)
     private String password;
 
+    @Column(name = "value", nullable = false, length = 45)
+    private String value;
+
     @OneToMany(cascade=CascadeType.ALL, mappedBy = "user_id")
     Collection<Message> messages;
 
@@ -23,17 +26,16 @@ public class User {
         return id;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
     public String getLogin() {
         return login;
     }
 
-    public User setLoginAndPassword(String login, String password) {
+    public String getValue() {return value;}
+
+    public User setLoginPasswordCookie(String login, String password, String value) {
         this.login = login;
         this.password = password;
+        this.value = value;
         return this;
     }
 
