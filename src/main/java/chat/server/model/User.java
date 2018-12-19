@@ -16,6 +16,7 @@ public class User {
     @Column(name = "password", nullable = false, length = 25)
     private String password;
 
+    //Значение cookie
     @Column(name = "value", nullable = false, length = 45)
     private String value;
 

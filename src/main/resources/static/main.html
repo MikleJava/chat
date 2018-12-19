@@ -11,10 +11,10 @@
 
         .chat {
             background-image: url('images/back.jpg');
-            -moz-background-size: 110%;
-            -webkit-background-size: 110%;
-            -o-background-size: 110%;
-            background-size: 110%;
+            -moz-background-size: 100%;
+            -webkit-background-size: 100%;
+            -o-background-size: 100%;
+            background-size: 100%;
             background-repeat: no-repeat;
             font-family: "Courier New", Courier, monospace;
             position: absolute;
@@ -23,7 +23,7 @@
             top: 55px;
             overflow: auto;
             margin: 0 0 0 0;
-            white-space: pre-wrap;
+            white-space: normal;
         }
 
         .form {
@@ -42,13 +42,6 @@
         #header {
             padding: 10px;
             padding-bottom: 0;
-        }
-
-        #body {
-            padding: 10px;
-            padding-top: 0;
-            padding-bottom: 30px; /* Height of the footer */
-
         }
 
         #left {
@@ -177,7 +170,7 @@
     }
 
     loadHistory();
-    setInterval(loadHistory, 1000);
+    setInterval(loadHistory, 3000);
     loadUsers();
-    setInterval(loadUsers, 1000);
+    setInterval(loadUsers, 3000);
 </script>

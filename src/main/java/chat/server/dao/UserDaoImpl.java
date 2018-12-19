@@ -60,7 +60,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<User> findAll() {
-        List u = em.createQuery("Select t from " + User.class.getSimpleName() + " t").getResultList();
-        return u;
+        return em.createQuery("Select t from " + User.class.getSimpleName() + " t").getResultList();
+
     }
 }

@@ -3,6 +3,7 @@ package chat.server.controller;
 import chat.server.model.Message;
 import chat.server.model.User;
 import chat.server.sevice.ChatService;
+import com.sun.xml.internal.bind.v2.runtime.output.SAXOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,8 +104,17 @@ public class ChatController extends HttpServlet {
             path = "online",
             method = RequestMethod.GET,
             produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity online() {
+    public ResponseEntity online(HttpServletRequest request) {
         List<User> onlineUsers = chatService.getOnlineUsers();
+        Cookie[] cookies = request.getCookies();
+        // Делаем проверку, получаем список текущих cookies, и проверяем есть ли такие cookie в базе.
+        // Если в базе они есть, а в текущем списке нет, то нужно сделать chatService.logout() по данному пользователю
+        for(User user : onlineUsers) {
+            if(!Arrays.asList(cookies).stream().map(Cookie::getValue).collect(Collectors.toList()).contains(user.getValue())){
+                chatService.logout(user);
+            }
+        }
+
         String responseBody = onlineUsers.stream()
                 .map(User::getLogin)
                 .collect(Collectors.joining("\n"));
