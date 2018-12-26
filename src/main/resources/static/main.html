@@ -98,7 +98,7 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script>
-    var host = "localhost";
+    var host = "192.168.1.196";
     var port = 8080;
     var domain = "/chat";
 
@@ -132,7 +132,6 @@
     }
 
     function say() {
-
         var msg = $('#msgform').serialize();
 
         var settings = {
@@ -152,7 +151,6 @@
     }
 
     function logout() {
-
         var settings = {
             "method": "POST",
             "crossDomain": true,
@@ -170,7 +168,7 @@
     }
 
     loadHistory();
-    setInterval(loadHistory, 3000);
+    setInterval(loadHistory, 2000);
     loadUsers();
-    setInterval(loadUsers, 3000);
+    setInterval(loadUsers, 2000);
 </script>

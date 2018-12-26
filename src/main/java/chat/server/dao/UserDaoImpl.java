@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.*;
 import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
+import java.time.LocalTime;
 import java.util.List;
 
 @Transactional
@@ -15,12 +16,29 @@ public class UserDaoImpl implements UserDao {
     private EntityManager em;
 
     @Override
-    public User getByCookieValue(String value) {
+    public User getByCookieValue(String cookie_val) {
         CriteriaBuilder builder = em.getCriteriaBuilder();
         CriteriaQuery<User> criteria = builder.createQuery(User.class);
         Root<User> from = criteria.from(User.class);
         criteria.select(from);
-        criteria.where(builder.equal(from.get("value"), value));
+        criteria.where(builder.equal(from.get("cookie_val"), cookie_val));
+        TypedQuery<User> typed = em.createQuery(criteria);
+        User user;
+        try {
+            user = typed.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+        return user;
+    }
+
+    @Override
+    public User getByRecentActionTime(LocalTime rec_act) {
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+        CriteriaQuery<User> criteria = builder.createQuery(User.class);
+        Root<User> from = criteria.from(User.class);
+        criteria.select(from);
+        criteria.where(builder.equal(from.get("rec_act"), rec_act));
         TypedQuery<User> typed = em.createQuery(criteria);
         User user;
         try {
@@ -54,13 +72,16 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public void delete(User user) {
-        em.remove(user);
+    public void delete(User user) {em.remove(user); }
+
+    @Override
+    public void update(User user) {
+        user.setRec_act(LocalTime.now());
+        em.merge(user);
     }
 
     @Override
     public List<User> findAll() {
         return em.createQuery("Select t from " + User.class.getSimpleName() + " t").getResultList();
-
     }
 }

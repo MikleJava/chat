@@ -3,9 +3,6 @@ package chat.server.controller;
 import chat.server.model.Message;
 import chat.server.model.User;
 import chat.server.sevice.ChatService;
-import com.sun.xml.internal.bind.v2.runtime.output.SAXOutput;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,50 +14,33 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.text.SimpleDateFormat;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("chat")
 public class ChatController extends HttpServlet {
-    private static final Logger log = LoggerFactory.getLogger(ChatController.class);
+    private static final String SESSION_ID = "SESSION_ID";  //variable for cookie name
+    private User loggedInUser;
 
     @Autowired
     private ChatService chatService;
-
-    private static final String SESSION_ID = "SESSION_ID";
-    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 
     @RequestMapping (
             path = "login",
             method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> login(@RequestParam("name") String name, @RequestParam("pswd") String pswd,
-                                        HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> login(@RequestParam("name") String name, @RequestParam("pswd") String pswd, HttpServletResponse response) {
         if (name.length() < 1) {return ResponseEntity.badRequest().body("Too short name");}
         if (name.length() > 25) {return ResponseEntity.badRequest().body("Too long name");}
         if (pswd.length() < 1) {return ResponseEntity.badRequest().body("Too short password");}
         if (pswd.length() > 25) {return ResponseEntity.badRequest().body("Too long password");}
-        User alreadyLoggedIn = chatService.getLoggedIn(name, pswd);
-        if(alreadyLoggedIn != null) {
-            return ResponseEntity.badRequest().body("Already logged in");
-        }
-        Cookie[] cookies = request.getCookies();
-        if(cookies == null) {
-            Cookie cookie = chatService.setCookie(SESSION_ID, name, pswd, response);
-            chatService.login(name, pswd, cookie.getValue());
-        } else {
-            User loggedInUser;
-            for(Cookie cookie : cookies) {
-                loggedInUser = chatService.getLoggedIn(cookie.getValue());
-                chatService.logout(loggedInUser);
-                chatService.deleteCookie(request, response);
-            }
-            Cookie cookie = chatService.setCookie(SESSION_ID, name, pswd, response);
-            chatService.login(name, pswd, cookie.getValue());
-        }
+        loggedInUser = chatService.getLoggedIn(name, pswd);
+        if(loggedInUser != null) {return ResponseEntity.badRequest().body("Already logged in");}
+        Cookie cookie = chatService.setCookie(SESSION_ID, name, pswd, response);
+        chatService.login(name, pswd, cookie.getValue(), LocalTime.now());
         return ResponseEntity.ok().build();
     }
 
@@ -69,15 +49,15 @@ public class ChatController extends HttpServlet {
             method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-        User loggedInUser;
         Cookie[] cookies = request.getCookies();
-        for(Cookie cookie : cookies) {
-            loggedInUser = chatService.getLoggedIn(cookie.getValue());
-            if(loggedInUser == null) {
-                return ResponseEntity.badRequest().body("You must be logged in");
+        if(cookies != null) {
+            for (Cookie cookie : cookies) {
+                loggedInUser = chatService.getLoggedInByCookie(cookie.getValue());
+                if (loggedInUser == null) {
+                    return ResponseEntity.badRequest().body("You must be logged in");
+                }
+                chatService.logout(loggedInUser, request, response);
             }
-            chatService.logout(loggedInUser);
-            chatService.deleteCookie(request, response);
         }
         return ResponseEntity.ok().build();
     }
@@ -88,15 +68,15 @@ public class ChatController extends HttpServlet {
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> say(@RequestParam("msg") String msg, HttpServletRequest request) {
-        User loggedInUser = null;
         Cookie[] cookies = request.getCookies();
+        if(cookies == null) {return ResponseEntity.badRequest().body("You must be logged in");}  //this check in case if no one user logged in
         for(Cookie cookie : cookies) {
-            loggedInUser = chatService.getLoggedIn(cookie.getValue());
+            loggedInUser = chatService.getLoggedInByCookie(cookie.getValue());
             if (loggedInUser == null) {
                 return ResponseEntity.badRequest().body("You must be logged in");
             }
         }
-        chatService.say(msg, sdf.format(new Date()), loggedInUser);
+        chatService.say(msg, LocalTime.now(), loggedInUser);
         return ResponseEntity.ok().build();
     }
 
@@ -104,20 +84,27 @@ public class ChatController extends HttpServlet {
             path = "online",
             method = RequestMethod.GET,
             produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity online(HttpServletRequest request) {
+    public ResponseEntity online(HttpServletRequest request, HttpServletResponse response) {
         List<User> onlineUsers = chatService.getOnlineUsers();
-        Cookie[] cookies = request.getCookies();
-        // Делаем проверку, получаем список текущих cookies, и проверяем есть ли такие cookie в базе.
-        // Если в базе они есть, а в текущем списке нет, то нужно сделать chatService.logout() по данному пользователю
-        for(User user : onlineUsers) {
-            if(!Arrays.asList(cookies).stream().map(Cookie::getValue).collect(Collectors.toList()).contains(user.getValue())){
-                chatService.logout(user);
-            }
-        }
-
         String responseBody = onlineUsers.stream()
                 .map(User::getLogin)
                 .collect(Collectors.joining("\n"));
+        List<LocalTime> timeOut = onlineUsers.stream().map(User::getRec_act).collect(Collectors.toList());
+        for(LocalTime lt : timeOut) {
+            //if user's last action was 5 or more minutes ago, server deletes him out from db
+            if(LocalTime.now().getMinute() >= lt.getMinute() && LocalTime.now().getMinute() - lt.getMinute() >= 1) {
+                onlineUsers.stream().map(loctime -> chatService.getLoggedInByTime(lt))
+                        .filter(Objects::nonNull)
+                        .forEach(user -> chatService.logout(user, request,  response));
+            }
+            //the same situation, but if the time of the last user's action was, for example, in 10:57 and current time 11:02,
+            //it means that 02<57, so we need add 60 minutes to correctly count period of the last user action. 62-57 = 5 minutes
+            else if(LocalTime.now().getMinute() < lt.getMinute() && (LocalTime.now().getMinute() + 60) - lt.getMinute() >= 1) {
+                onlineUsers.stream().map(loctime -> chatService.getLoggedInByTime(lt))
+                        .filter(Objects::nonNull)
+                        .forEach(user -> chatService.logout(user, request , response));
+            }
+        }
         return ResponseEntity.ok(responseBody);
     }
 

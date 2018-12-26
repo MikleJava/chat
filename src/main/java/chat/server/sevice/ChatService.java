@@ -14,9 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ChatService {
@@ -29,27 +29,35 @@ public class ChatService {
 
     @Nullable
     @Transactional
-    public User getLoggedIn(@NotNull String value) {
+    public User getLoggedIn(@NotNull String name, @NotNull String pswd) {return userDao.getByLoginAndPassword(name, pswd);}
+
+    @Nullable
+    @Transactional
+    public User getLoggedInByCookie(@NotNull String value) {
         return userDao.getByCookieValue(value);
     }
 
     @Nullable
     @Transactional
-    public User getLoggedIn(@NotNull String name, @NotNull String pswd) {
-        return userDao.getByLoginAndPassword(name, pswd);
-    }
+    public User getLoggedInByTime(@NotNull LocalTime rec_act) {return userDao.getByRecentActionTime(rec_act);}
 
     @Transactional
-    public void login(@NotNull String login, @NotNull String password, @NotNull String value) {
+    public void login(@NotNull String login, @NotNull String password, @NotNull String value, @NotNull LocalTime time) {
         User user = new User();
-        userDao.save(user.setLoginPasswordCookie(login, password, value));
+        userDao.save(user.setFullUser(login, password, value, time));
         log.info("[" + login + "] logged in");
     }
 
     @Transactional
-    public void logout(@NotNull User user) {
+    public void logout(@NotNull User user, HttpServletRequest request, HttpServletResponse response) {
         userDao.delete(user);
         log.info("[" + user.getLogin() + "] logged out");
+        deleteCookie(user, request, response);
+    }
+
+    @Transactional
+    public void updateUser(@NotNull User user) {
+        userDao.update(user);
     }
 
     @NotNull
@@ -65,13 +73,14 @@ public class ChatService {
     }
 
     @Transactional
-    public void say(@NotNull String value, @NotNull String time, @NotNull User user_id) {
+    public void say(@NotNull String value, @NotNull LocalTime time, @NotNull User user_id) {
         Message message = new Message();
         messageDao.save(message.setFullMsg(value, time, user_id));
+        updateUser(user_id);
     }
 
     public Cookie setCookie(String SESSION_ID, @NotNull String name, @NotNull String pswd, HttpServletResponse response){
-        String value = name.hashCode() + "/" + name.charAt(0) + pswd.hashCode() + "-" + pswd.charAt(0);
+        String value = name.hashCode() + "/" +  name.charAt(0) + pswd.hashCode() + "/" + LocalTime.now();
         Cookie cookie = new Cookie(SESSION_ID, value);
         cookie.setMaxAge(-1);
         cookie.setPath("/");
@@ -79,14 +88,16 @@ public class ChatService {
         return cookie;
     }
 
-    public void deleteCookie(HttpServletRequest request, HttpServletResponse response) {
+    public void deleteCookie(@NotNull User user, HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
         for(Cookie cookie : cookies) {
-            response.setContentType("text/html");
-            Cookie cookieD = new Cookie(cookie.getName(), cookie.getValue());
-            cookieD.setMaxAge(0);
-            cookieD.setPath("/");
-            response.addCookie(cookieD);
+            if(cookie.getValue().equals(user.getValue())) {
+                response.setContentType("text/html");
+                Cookie deletingCookie = new Cookie(cookie.getName(), user.getValue());
+                deletingCookie.setMaxAge(0);
+                deletingCookie.setPath("/");
+                response.addCookie(deletingCookie);
+            }
         }
     }
 }
