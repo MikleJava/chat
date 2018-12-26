@@ -92,14 +92,14 @@ public class ChatController extends HttpServlet {
         List<LocalTime> timeOut = onlineUsers.stream().map(User::getRec_act).collect(Collectors.toList());
         for(LocalTime lt : timeOut) {
             //if user's last action was 5 or more minutes ago, server deletes him out from db
-            if(LocalTime.now().getMinute() >= lt.getMinute() && LocalTime.now().getMinute() - lt.getMinute() >= 1) {
+            if(LocalTime.now().getMinute() >= lt.getMinute() && LocalTime.now().getMinute() - lt.getMinute() >= 5) {
                 onlineUsers.stream().map(loctime -> chatService.getLoggedInByTime(lt))
                         .filter(Objects::nonNull)
                         .forEach(user -> chatService.logout(user, request,  response));
             }
-            //the same situation, but if the time of the last user's action was, for example, in 10:57 and current time 11:02,
+            //the same situation, but if the time of the last user's action was, for example, at 10:57 and current time 11:02,
             //it means that 02<57, so we need add 60 minutes to correctly count period of the last user action. 62-57 = 5 minutes
-            else if(LocalTime.now().getMinute() < lt.getMinute() && (LocalTime.now().getMinute() + 60) - lt.getMinute() >= 1) {
+            else if(LocalTime.now().getMinute() < lt.getMinute() && (LocalTime.now().getMinute() + 60) - lt.getMinute() >= 5) {
                 onlineUsers.stream().map(loctime -> chatService.getLoggedInByTime(lt))
                         .filter(Objects::nonNull)
                         .forEach(user -> chatService.logout(user, request , response));
