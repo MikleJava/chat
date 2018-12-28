@@ -21,11 +21,11 @@ public class ChatClient {
     }
 
     //POST запрос для того, чтобы отлогиниться пользователю "http://localhost:8080/chat/logout"
-    public static Response logout(String name) throws IOException {
+    public static Response logout() throws IOException {
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         Request request = new Request.Builder()
                 .post(RequestBody.create(mediaType,""))
-                .url(PROTOCOL + HOST + PORT + "/chat/logout?name=" + name)
+                .url(PROTOCOL + HOST + PORT + "/chat/logout")
                 .build();
         return client.newCall(request).execute();
     }
@@ -51,11 +51,11 @@ public class ChatClient {
     }
 
     //POST запрос для того, чтобы пользователь мог написать сообщение в чат "http://localhost:8080/chat/say"
-    public static Response say(String name, String msg) throws IOException {
+    public static Response say(String msg) throws IOException {
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         Request request = new Request.Builder()
                 .post(RequestBody.create(mediaType,""))
-                .url(PROTOCOL + HOST + PORT + "/chat/say?name=" + name + "&msg=" + msg)
+                .url(PROTOCOL + HOST + PORT + "/chat/say?msg=" + msg)
                 .build();
         return client.newCall(request).execute();
     }

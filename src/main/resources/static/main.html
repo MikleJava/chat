@@ -98,7 +98,7 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script>
-    var host = "192.168.1.196";
+    var host = "localhost";
     var port = 8080;
     var domain = "/chat";
 
@@ -160,7 +160,7 @@
         $.ajax(settings).done(function (response) {
             loadHistory();
             loadUsers();
-            window.location = "http://" + host + ":" + port + "/bye.html";
+            window.location = "http://" + host + ":" + port + "/index.html";
         }).fail(function (jqXHR, textStatus) {
             alert(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
             console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
@@ -168,7 +168,7 @@
     }
 
     loadHistory();
-    setInterval(loadHistory, 2000);
+    setInterval(loadHistory, 1000);
     loadUsers();
-    setInterval(loadUsers, 2000);
+    setInterval(loadUsers, 1000);
 </script>
