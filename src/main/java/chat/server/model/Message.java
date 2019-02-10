@@ -20,6 +20,12 @@ public class Message {
     @Column(name = "value", nullable = false, length = 145)
     private String value;
 
+    public Message() {}
+
+    public Message(String value) {
+        this.value = value;
+    }
+
     public Message setFullMsg(String value, LocalTime time, User user_id) {
         this.value = value;
         this.time = time;
@@ -41,6 +47,10 @@ public class Message {
 
     public String getValue() {
         return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 
     public Integer getId() {

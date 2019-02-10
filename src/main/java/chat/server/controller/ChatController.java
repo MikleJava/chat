@@ -3,17 +3,22 @@ package chat.server.controller;
 import chat.server.model.Message;
 import chat.server.model.User;
 import chat.server.sevice.ChatService;
+import chat.server.socket.Content;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.HtmlUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,11 +26,19 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("chat")
 public class ChatController extends HttpServlet {
-    private static final String SESSION_ID = "SESSION_ID";  //variable for cookie name
+    private static final String SESSION_ID = "SESSION_ID";
     private User loggedInUser;
 
     @Autowired
     private ChatService chatService;
+
+    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+
+    @MessageMapping("/content")
+    @SendTo("/topic/messages")
+    public Content greeting(Message message) throws Exception {
+        return new Content(sdf.format(new Date()) + " " + loggedInUser.getLogin() + " : " + HtmlUtils.htmlEscape(message.getValue()));
+    }
 
     @RequestMapping (
             path = "login",
