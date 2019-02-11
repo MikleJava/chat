@@ -88,6 +88,9 @@
 </div>
 <div id="body">
     <div id="history" class="chat form">
+        <div id="messages">
+
+        </div>
     </div>
 </div>
 <div id="footer">
@@ -100,7 +103,7 @@
 </html>
 
 <script>
-    var host = "192.168.1.42";
+    var host = "localhost";
     var port = 8080;
     var domain = "/chat";
 
@@ -186,12 +189,12 @@
         $("#connect").prop("disabled", connected);
         $("#disconnect").prop("disabled", !connected);
         if (connected) {
-            $("#history").show();
+            $("#messages").show();
         }
         else {
-            $("#history").hide();
+            $("#messages").hide();
         }
-        $("#history").html("");
+        $("#messages").html("");
     }
 
     function disconnect() {
@@ -207,7 +210,7 @@
     }
 
     function showContent(message) {
-        $("#history").append("<tr><td>" + message + "</td></tr>");
+        $("#messages").append("<tr><td>" + message + "</td></tr>");
     }
 
     $(function () {
