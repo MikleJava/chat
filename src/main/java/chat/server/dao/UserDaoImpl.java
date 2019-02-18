@@ -1,6 +1,7 @@
 package chat.server.dao;
 
 import chat.server.model.User;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.*;
@@ -14,14 +15,14 @@ import java.util.List;
 public class UserDaoImpl implements UserDao {
     @PersistenceContext
     private EntityManager em;
-
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(UserDaoImpl.class);
     @Override
-    public User getByCookieValue(String cookie_val) {
+    public User getByCookieValue(String cookieValue) {
         CriteriaBuilder builder = em.getCriteriaBuilder();
         CriteriaQuery<User> criteria = builder.createQuery(User.class);
         Root<User> from = criteria.from(User.class);
         criteria.select(from);
-        criteria.where(builder.equal(from.get("cookie_val"), cookie_val));
+        criteria.where(builder.equal(from.get("cookieValue"), cookieValue));
         TypedQuery<User> typed = em.createQuery(criteria);
         User user;
         try {
@@ -33,12 +34,12 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public User getByRecentActionTime(LocalTime rec_act) {
+    public User getByRecentActionTime(LocalTime recentAction) {
         CriteriaBuilder builder = em.getCriteriaBuilder();
         CriteriaQuery<User> criteria = builder.createQuery(User.class);
         Root<User> from = criteria.from(User.class);
         criteria.select(from);
-        criteria.where(builder.equal(from.get("rec_act"), rec_act));
+        criteria.where(builder.equal(from.get("recentAction"), recentAction));
         TypedQuery<User> typed = em.createQuery(criteria);
         User user;
         try {
@@ -72,11 +73,11 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public void delete(User user) {em.remove(user); }
+    public void delete(User user) {em.remove(em.contains(user) ? user : em.merge(user)); }
 
     @Override
     public void update(User user) {
-        user.setRec_act(LocalTime.now());
+        user.setRecentAction(LocalTime.now());
         em.merge(user);
     }
 

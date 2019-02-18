@@ -18,10 +18,10 @@ public class User {
     private String password;
 
     @Column(name = "cookie_val", nullable = false, length = 45)
-    private String cookie_val;
+    private String cookieValue;
 
     @Column(name = "rec_act", nullable = false)
-    private LocalTime rec_act;
+    private LocalTime recentAction;
 
     @OneToMany(cascade=CascadeType.ALL, mappedBy = "user_id")
     Collection<Message> messages;
@@ -34,26 +34,26 @@ public class User {
         return login;
     }
 
-    public String getValue() {return cookie_val;}
+    public String getCookieValue() {return cookieValue;}
 
-    public Integer getUser_id() {
+    public Integer getUserId() {
         return user_id;
     }
 
-    public User setRec_act(LocalTime rec_act) {
-        this.rec_act = rec_act;
+    public User setRecentAction(LocalTime recentAction) {
+        this.recentAction = recentAction;
         return this;
     }
 
-    public LocalTime getRec_act() {
-        return rec_act;
+    public LocalTime getRecentAction() {
+        return recentAction;
     }
 
-    public User setFullUser(String login, String password, String cookie_value, LocalTime rec_act) {
+    public User setFullUser(String login, String password, String cookie_value, LocalTime recentAction) {
         this.login = login;
         this.password = password;
-        this.cookie_val = cookie_value;
-        this.rec_act = rec_act;
+        this.cookieValue = cookie_value;
+        this.recentAction = recentAction;
         return this;
     }
 }

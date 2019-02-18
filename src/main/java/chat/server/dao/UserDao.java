@@ -4,7 +4,6 @@ import chat.server.model.User;
 
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface UserDao {
     User getByCookieValue(String value);
@@ -13,5 +12,5 @@ public interface UserDao {
     void save(User user);
     void delete(User user);
     void update(User user);
-    List<User> findAll();
+    List findAll();
 }

@@ -51,7 +51,7 @@
         #left {
             position: absolute;
             left: 18px;
-            width: 30%;
+            width: 20%;
             top: 55px;
             height: 85%;
             background: #F0B27A;
@@ -102,6 +102,7 @@
 </body>
 </html>
 
+
 <script>
     var host = "localhost";
     var port = 8080;
@@ -128,7 +129,6 @@
             "url": "http://" + host + ":" + port + domain + "/online",
             "method": "GET"
         }
-
         $.ajax(settings).done(function (response) {
             $("#usersonline").html(response.replace(/\n/g, "<br />"))
         }).fail(function (jqXHR, textStatus) {
@@ -170,6 +170,20 @@
         });
     }
 
+    function autologout() {
+        var settings = {
+            "method": "POST",
+            "crossDomain": true,
+            "url": "http://" + host + ":" + port + domain + "/autologout",
+        };
+
+        $.ajax(settings).done(function (response) {
+        }).fail(function (jqXHR, textStatus) {
+            alert(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
+            console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
+        });
+    }
+
     var stompClient = null;
 
     function connect() {
@@ -179,8 +193,8 @@
             setConnected(true);
             loadUsers();
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/messages', function (greeting) {
-                showContent(JSON.parse(greeting.body).content);
+            stompClient.subscribe('/topic/messages', function (cont) {
+                showContent(JSON.parse(cont.body).content);
             });
         });
     }
@@ -190,11 +204,14 @@
         $("#disconnect").prop("disabled", !connected);
         if (connected) {
             $("#messages").show();
+            $("#usersonline").show();
         }
         else {
             $("#messages").hide();
+            $("#usersonline").hide();
         }
         $("#messages").html("");
+        $("#usersonline").html("");
     }
 
     function disconnect() {
@@ -222,5 +239,7 @@
         $( "#logout" ).click(function() { logout(); });
         $( "#sendmsg" ).click(function() { sendMsg(); });
     });
+
+    setInterval(loadUsers, 5000);
 
 </script>
