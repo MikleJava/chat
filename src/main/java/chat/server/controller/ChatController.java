@@ -4,6 +4,8 @@ import chat.server.model.Message;
 import chat.server.model.User;
 import chat.server.sevice.ChatService;
 import chat.server.socket.Content;
+import org.apache.tomcat.jni.Local;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,20 +27,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("chat")
 public class ChatController extends HttpServlet {
-    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+
+    SimpleDateFormat sdfHMS = new SimpleDateFormat("HH:mm:ss");
+    private User loggedInUser;
 
     @MessageMapping("/content")
     @SendTo("/topic/messages")
     public Content greeting(Message message) throws Exception {
-        return new Content(sdf.format(new Date()) + " " + loggedInUser.getLogin() + " : " + HtmlUtils.htmlEscape(message.getValue()));
+        return new Content(sdfHMS.format(new Date()) + " " + loggedInUser.getLogin() + " : " + HtmlUtils.htmlEscape(message.getValue()));
     }
 
     private static final String SESSION_ID = "SESSION_ID";
-    private User loggedInUser;
     @Autowired
     private ChatService chatService;
 
@@ -59,6 +63,7 @@ public class ChatController extends HttpServlet {
         return ResponseEntity.ok().build();
     }
 
+    SimpleDateFormat sdfHM = new SimpleDateFormat("HH:mm");
     @RequestMapping (
             path = "autologout",
             method = RequestMethod.POST)
@@ -69,22 +74,13 @@ public class ChatController extends HttpServlet {
             @Override
             public void run() {
                 List<User> onlineUsers = chatService.getOnlineUsers();
-                List<LocalTime> timeOut = onlineUsers.stream().map(User::getRecentAction).collect(Collectors.toList());
-                for (LocalTime lt : timeOut) {
-                    //if user's last action was 5 or more minutes ago, server deletes him out from db
-                    if (LocalTime.now().getMinute() >= lt.getMinute() && LocalTime.now().getMinute() - lt.getMinute() >= 1) {
-                        onlineUsers.stream().map(loctime -> chatService.getLoggedInByTime(lt))
-                                .filter(Objects::nonNull)
-                                .forEach(user -> chatService.logout(user, request, response));
-                    }
-                    //the same situation, but if the time of the last user's action was, for example, at 10:57 and current time 11:02,
-                    //it means that 02<57, so we need add 60 minutes to correctly count period of the last user action. 62-57 = 5 minutes
-                    else if (LocalTime.now().getMinute() < lt.getMinute() && (LocalTime.now().getMinute() + 60) - lt.getMinute() >= 1) {
-                        onlineUsers.stream().map(loctime -> chatService.getLoggedInByTime(lt))
-                                .filter(Objects::nonNull)
-                                .forEach(user -> chatService.logout(user, request, response));
-                    }
-                }
+                onlineUsers.stream()
+                        .map(User::getRecentAction)
+                        .filter(lt -> (lt.plusMinutes(1).getHour() + ":" + lt.plusMinutes(1).getMinute()).equals(sdfHM.format(new Date())))
+                        .map(chatService::getLoggedInByTime)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList())
+                        .forEach(user -> chatService.logout(user, request, response));
             }
         }, 10, 10, TimeUnit.SECONDS);
         return ResponseEntity.ok().build();
@@ -95,15 +91,9 @@ public class ChatController extends HttpServlet {
             method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-//        if(!chatService.checkIdentifiedUser(loggedInUser, request)) return ResponseEntity.badRequest().body("You must be logged in");
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) return ResponseEntity.badRequest().body("You must be logged in");
-        for(Cookie cookie : cookies) {
-            loggedInUser = chatService.getLoggedInByCookie(cookie.getValue());
-            if (loggedInUser == null) {
-                return ResponseEntity.badRequest().body("You must be logged in");
-            }
-        }
+        if(request.getCookies() == null) {return ResponseEntity.badRequest().body("You must be logged in");}
+        Optional<Cookie> cookies = Optional.of(Arrays.stream(request.getCookies()).findAny().get());
+        loggedInUser = chatService.getLoggedInByCookie(cookies.get().getValue());
         chatService.logout(loggedInUser, request, response);
         return ResponseEntity.ok().build();
     }
@@ -114,29 +104,18 @@ public class ChatController extends HttpServlet {
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> say(@RequestParam("msg") String msg, HttpServletRequest request) {
-        //if(!chatService.checkIdentifiedUser(loggedInUser, request)) return ResponseEntity.badRequest().body("You must be logged in");
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) return ResponseEntity.badRequest().body("You must be logged in");
-        for(Cookie cookie : cookies) {
-            loggedInUser = chatService.getLoggedInByCookie(cookie.getValue());
-            if (loggedInUser == null) {
-                return ResponseEntity.badRequest().body("You must be logged in");
-            }
-        }
+        if(request.getCookies() == null) {return ResponseEntity.badRequest().body("You must be logged in");}
+        Optional<Cookie> cookies = Optional.of(Arrays.stream(request.getCookies()).findAny().get());
+        loggedInUser = chatService.getLoggedInByCookie(cookies.get().getValue());
         chatService.say(msg, LocalTime.now(), loggedInUser);
         return ResponseEntity.ok().build();
     }
 
-    private static boolean autoLogoutScheduler = false;
     @RequestMapping(
             path = "online",
             method = RequestMethod.GET,
             produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity online(HttpServletRequest request, HttpServletResponse response) {
-        if(!autoLogoutScheduler) {
-            autoLogout(request, response);
-            autoLogoutScheduler = true;
-        }
+    public ResponseEntity<String> online() {
         List<User> onlineUsers = chatService.getOnlineUsers();
         String responseBody = onlineUsers.stream()
                 .map(User::getLogin)
@@ -148,7 +127,7 @@ public class ChatController extends HttpServlet {
             path = "chat",
             method = RequestMethod.GET,
             produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity chat() {
+    public ResponseEntity<String> chat() {
         List<Message> messages = chatService.getMessages();
         String responseBody = messages.stream()
                 .map(Message::getFullMsg)

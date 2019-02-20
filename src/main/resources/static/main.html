@@ -123,11 +123,25 @@
         });
     }
 
+    var autoLogoutScheduler = true;
     function loadUsers() {
         var settings = {
             "crossDomain": true,
             "url": "http://" + host + ":" + port + domain + "/online",
             "method": "GET"
+        }
+        var autoLogoutSettings = {
+            "method": "POST",
+            "crossDomain": true,
+            "url": "http://" + host + ":" + port + domain + "/autologout"
+        }
+        if(autoLogoutScheduler) {
+            autoLogoutScheduler = false;
+            $.ajax(autoLogoutSettings).done(function (response) {
+            $("#usersonline").html(response.replace(/\n/g, "<br />"))
+            }).fail(function (jqXHR, textStatus) {
+                console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
+            });
         }
         $.ajax(settings).done(function (response) {
             $("#usersonline").html(response.replace(/\n/g, "<br />"))
@@ -240,6 +254,6 @@
         $( "#sendmsg" ).click(function() { sendMsg(); });
     });
 
-    setInterval(loadUsers, 5000);
+    setInterval(loadUsers, 3000);
 
 </script>
