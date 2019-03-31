@@ -1,11 +1,18 @@
 package chat.server.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
 import java.time.LocalTime;
 
+@Getter
+@Setter
 @Entity
+@NoArgsConstructor
 @Table(name = "message", schema = "chat")
-public class Message {
+public final class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer message_id;
@@ -20,40 +27,10 @@ public class Message {
     @Column(name = "value", nullable = false, length = 145)
     private String value;
 
-    public Message() {}
-
-    public Message(String value) {
-        this.value = value;
-    }
-
     public Message setFullMsg(String value, LocalTime time, User user_id) {
         this.value = value;
         this.time = time;
         this.user_id = user_id;
         return this;
-    }
-
-    public String getFullMsg() {
-        return time + " " + user_id.getLogin() + " : " + value;
-    }
-
-    public User getUserId() {
-        return user_id;
-    }
-
-    public LocalTime getTime() {
-        return time;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public Integer getId() {
-        return message_id;
     }
 }

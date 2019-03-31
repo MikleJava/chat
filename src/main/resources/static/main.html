@@ -136,6 +136,7 @@
             "url": "http://" + host + ":" + port + domain + "/autologout"
         }
         if(autoLogoutScheduler) {
+            alert('autologout');
             autoLogoutScheduler = false;
             $.ajax(autoLogoutSettings).done(function (response) {
             $("#usersonline").html(response.replace(/\n/g, "<br />"))

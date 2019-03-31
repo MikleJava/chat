@@ -1,12 +1,19 @@
 package chat.server.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
 import java.time.LocalTime;
 import java.util.Collection;
 
+@Getter
+@Setter
 @Entity
+@NoArgsConstructor
 @Table(name = "user", schema = "chat")
-public class User {
+public final class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer user_id;
@@ -25,29 +32,6 @@ public class User {
 
     @OneToMany(cascade=CascadeType.ALL, mappedBy = "user_id")
     Collection<Message> messages;
-
-    public Integer getId() {
-        return user_id;
-    }
-
-    public String getLogin() {
-        return login;
-    }
-
-    public String getCookieValue() {return cookieValue;}
-
-    public Integer getUserId() {
-        return user_id;
-    }
-
-    public User setRecentAction(LocalTime recentAction) {
-        this.recentAction = recentAction;
-        return this;
-    }
-
-    public LocalTime getRecentAction() {
-        return recentAction;
-    }
 
     public User setFullUser(String login, String password, String cookie_value, LocalTime recentAction) {
         this.login = login;
